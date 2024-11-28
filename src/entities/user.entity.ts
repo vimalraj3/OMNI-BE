@@ -61,6 +61,7 @@ export class User {
 
   @Column({ nullable: true })
   verificationToken!: string;
+
   @CreateDateColumn({ default: false })
   verificationTokenExpired!: Date;
 

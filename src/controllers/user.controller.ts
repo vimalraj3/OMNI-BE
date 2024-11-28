@@ -118,7 +118,6 @@ export const userLogin = catchAsync(
 export const verifyUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const verifyToken = req.params.token;
-  
   }
 );
 // export const userRegister = catchAsync(
