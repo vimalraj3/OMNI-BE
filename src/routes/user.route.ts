@@ -16,3 +16,4 @@ router.post("/login", validateRequest(loginUserSchema), userLogin);
 router.get("/verifyUser/:token", verifyUser);
 
 export default router;
+// https://github.com/GABRIELOFGOD/OMNI-BE
