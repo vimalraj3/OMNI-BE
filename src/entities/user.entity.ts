@@ -59,11 +59,11 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column({ nullable: true })
-  verificationToken!: string;
+  @Column({ type: "varchar", length: 255, nullable: true })
+  verificationToken!: string | null;
 
-  @CreateDateColumn({ default: false })
-  verificationTokenExpired!: Date;
+  @CreateDateColumn({ nullable: true })
+  verificationTokenExpires!: Date | null;
 
   @Column({ default: false })
   isVerified!: boolean;

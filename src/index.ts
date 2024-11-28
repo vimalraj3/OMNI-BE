@@ -17,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 dbConfig();
 
-app.set("trust proxy", 1 /* number of proxies between user and server */);
+app.set("trust proxy", true);
 app.set("view engine", "pug");
 app.set("views", path.join(__dirname, "views"));
 
@@ -36,6 +36,11 @@ dataSource
   .catch((err) => {
     console.error("Error during Data Source initialization", err);
   });
+
+app.use((req, res, next) => {
+  console.log("Client IP:", req.headers["x-forwarded-for"] || req.ip);
+  next();
+});
 
 app.use("/api/v2/user", userRoutes);
 
