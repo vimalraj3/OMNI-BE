@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,  } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity("users")
 export class User {
@@ -6,7 +15,7 @@ export class User {
   id!: number;
 
   @Column()
-  fisrtName!: string;
+  firstName!: string;
 
   @Column()
   lastName!: string;
@@ -20,7 +29,7 @@ export class User {
   @Column()
   address!: string;
 
-  @Column()
+  @Column({ nullable: true })
   lastIpAdress!: string;
 
   @ManyToOne(() => User, (user) => user.referrers)
@@ -32,7 +41,7 @@ export class User {
   @Column()
   phoneNumber!: string;
 
-  @Column()
+  @Column({ nullable: true })
   referralCode!: string;
 
   @Column()
@@ -41,7 +50,7 @@ export class User {
   @Column()
   password!: string;
 
-  @Column()
+  @Column({ default: "user" })
   role!: string;
 
   @CreateDateColumn()
@@ -49,4 +58,13 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  verificationToken!: string | null;
+
+  @CreateDateColumn({ nullable: true })
+  verificationTokenExpires!: Date | null;
+
+  @Column({ default: false })
+  isVerified!: boolean;
 }

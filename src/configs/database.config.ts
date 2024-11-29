@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import mysql from "mysql2/promise";
 
 const dbConfig = async () => {
   try {
@@ -9,10 +9,10 @@ const dbConfig = async () => {
       database: process.env.DB_NAME,
     });
 
-    console.log('DATABASE CONNECTED SUCCESSFULLY');
+    console.log("DATABASE CONNECTED SUCCESSFULLY");
     return connection;
   } catch (error) {
-    console.error('Database connection failed:', error);
+    console.error("Database connection failed:", error);
     throw error;
   }
 };
