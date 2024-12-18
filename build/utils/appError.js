@@ -1,10 +1,11 @@
+"use strict";
 // class AppError extends Error {
 //   statusCode: number;
 //   status: string;
 //   isOperational: boolean;
 //   errorCode?: string | number;
 //   sqlMessage?: string;
-
+Object.defineProperty(exports, "__esModule", { value: true });
 //   constructor(
 //     message: string,
 //     statusCode: number,
@@ -20,5 +21,4 @@
 //     Error.captureStackTrace(this, this.constructor);
 //   }
 // }
-
 // export default AppError;

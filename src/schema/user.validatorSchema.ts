@@ -6,10 +6,11 @@ export const createUserSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   country: Joi.string().required(),
+  state: Joi.string().required(),
   city: Joi.string().required(),
   address: Joi.string().required(),
-  phoneNumber: Joi.string().required(),
-  referralCode: Joi.string().optional(),
+  phone: Joi.string().required(),
+  referralCode: Joi.string().optional().empty(''),
 });
 
 export const loginUserSchema = Joi.object({

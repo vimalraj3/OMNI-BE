@@ -3,8 +3,11 @@ import path from "path";
 import { config } from "dotenv";
 import { AppError, globalErrorHandler } from "./services/errorHandling.service";
 import userRoutes from "./routes/user.route";
+import investmentRoutes from "./routes/investment.route";
 import dbConfig from "./configs/database.config";
 import { dataSource } from "./configs/dataSource";
+import cors from "cors";
+import morgan from "morgan";
 
 // ========== CONFIGURATIONS ========== //
 config();
@@ -21,7 +24,13 @@ app.set("trust proxy", true);
 app.set("view engine", "pug");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(morgan("dev"));
+
 app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+}));
 
 // ========== ROUTES ========== //
 app.all("/", (req: Request, res: Response) =>
@@ -37,12 +46,8 @@ dataSource
     console.error("Error during Data Source initialization", err);
   });
 
-app.use((req, res, next) => {
-  console.log("Client IP:", req.headers["x-forwarded-for"] || req.ip);
-  next();
-});
-
 app.use("/api/v2/user", userRoutes);
+app.use("/api/v2/investment", investmentRoutes);
 
 // ========== ERROR HANDLING ========== //
 app.all("*", (req: Request, res: Response, next: NextFunction) =>
