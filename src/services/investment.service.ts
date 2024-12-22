@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 import { User } from "../entities/user.entity";
 import { Earning, EarningType } from "../entities/earnings.entity";
 
@@ -8,7 +8,7 @@ export class InvestmentService {
     private readonly earningHistoryRepository: Repository<Earning>
   ) {}
 
-  calculateInvestmentRoi(amount: number): number{
+  calculateInvestmentRoi(amount: number): number {
     let roi = 0;
     roi = amount * 0.0055;
     return roi;
@@ -20,11 +20,11 @@ export class InvestmentService {
     visited: Set<string> = new Set<string>()
   ): Promise<number> {
     if (generation > 15) return 0; // Stop recursion after the 15th generation.
-  
+
     // Prevent circular references by checking the visited set.
     if (visited.has(user.email)) return 0;
     visited.add(user.email);
-  
+
     // Preload user data with all necessary relations.
     const theUser = await this.userRepository.findOne({
       where: { email: user.email },
@@ -36,12 +36,12 @@ export class InvestmentService {
         "referrers.referrers",
       ],
     });
-  
+
     if (!theUser) return 0;
-  
+
     const referrals = theUser.referrers;
     let bonus = 0;
-  
+
     // Bonus percentages for each generation.
     const bonusPercentages: Record<number, number> = {
       1: 0.18,
@@ -60,9 +60,9 @@ export class InvestmentService {
       14: 0.005,
       15: 0.005,
     };
-  
+
     const bonusPercentage = bonusPercentages[generation] || 0;
-  
+
     for (const theReferral of referrals) {
       const referral = await this.userRepository.findOne({
         where: { email: theReferral.email },
@@ -74,21 +74,21 @@ export class InvestmentService {
           "referrers.referrers",
         ],
       });
-  
+
       if (!referral) continue;
-  
+
       // Calculate total investment for the referral.
       const referralTotalInvestment = referral.investments.reduce(
         (sum, investment) => sum + investment.amount,
         0
       );
-  
+
       // Calculate daily earnings based on total investment.
       const referralDailyEarnings = referralTotalInvestment * 0.0055;
-  
+
       // Calculate bonus for the current generation.
       bonus += referralDailyEarnings * bonusPercentage;
-  
+
       // Recursive call for the next generation.
       if (referral.referrers && referral.referrers.length > 0) {
         bonus += await this.calculateReferralBonus(
@@ -98,7 +98,7 @@ export class InvestmentService {
         );
       }
     }
-  
+
     return bonus;
   }
 
@@ -106,10 +106,10 @@ export class InvestmentService {
     try {
       const amountoBeDistributed = 20;
       // ================= GIVE DIRECT REFERRAL BONUS OF $6 ================= //
-      const directReferral = await this.userRepository.findOne({ 
+      const directReferral = await this.userRepository.findOne({
         where: { id: user.referredBy.id },
-        relations: ["earningsHistory"]
-       });
+        relations: ["earningsHistory"],
+      });
       if (!directReferral) return false;
       directReferral.claimable += 6;
       const directReferralEarning = this.earningHistoryRepository.create({
@@ -118,8 +118,11 @@ export class InvestmentService {
         type: EarningType.SIX_DOLLAR_MAGIC,
         description: "Direct referral bonus",
       });
-      const newUserEarning = await this.earningHistoryRepository.save(directReferralEarning);
-      directReferral.earningsHistory && directReferral.earningsHistory.push(newUserEarning);
+      const newUserEarning = await this.earningHistoryRepository.save(
+        directReferralEarning
+      );
+      directReferral.earningsHistory &&
+        directReferral.earningsHistory.push(newUserEarning);
       await this.userRepository.save(directReferral);
 
       // ================= GIVE INDIRECT REFERRAL BONUS OF $1 ================= //
@@ -133,8 +136,11 @@ export class InvestmentService {
           type: EarningType.ONE_DOLLAR_MAGIC,
           description: "Indirect referral bonus",
         });
-        const newReferrerEarning = await this.earningHistoryRepository.save(referrerEarning);
-        referrer.earningsHistory && referrer.earningsHistory.push(newReferrerEarning);
+        const newReferrerEarning = await this.earningHistoryRepository.save(
+          referrerEarning
+        );
+        referrer.earningsHistory &&
+          referrer.earningsHistory.push(newReferrerEarning);
         await this.userRepository.save(referrer);
         referrer = referrer.referredBy;
       }
@@ -142,6 +148,99 @@ export class InvestmentService {
     } catch (error: any) {
       throw error;
     }
+  };
+
+  private readonly BOA_REQUIREMENT = 300000; // $300,000 requirement
+  private readonly BOA_QUALIFICATION_DAYS = 60; // 60 days to qualify
+  private readonly BOA_WEEKLY_SALARY = 3000; // $3,000 weekly salary
+  private readonly BOA_GLOBAL_BONUS_PERCENTAGE = 0.02; // 2% global bonus
+
+  async checkBOAQualification(user: User): Promise<boolean> {
+    // Get user's total investment within the 60-day period
+    const joinDate = user.createdAt;
+    const waitingPeriod = new Date(
+      joinDate.getTime() + this.BOA_QUALIFICATION_DAYS * 24 * 60 * 60 * 1000
+    );
+    const currentDate = new Date();
+
+    if (currentDate < waitingPeriod) return false;
+
+    const totalInvestment = user.investments.reduce(
+      (sum, investment) => sum + investment.amount,
+      0
+    );
+
+    // Check if user meets the BOA requirement
+    if (totalInvestment >= this.BOA_REQUIREMENT && !user.isBoaQualified) {
+      // Update user's BOA status
+      user.isBoaQualified = true;
+      await this.userRepository.save(user);
+
+      return true;
+    }
+
+    return false;
   }
-  
+
+  async distributeBOAWeeklySalary(): Promise<void> {
+    try {
+      // First get all users created within last 60 days
+      const users = await this.userRepository.find({
+        where: {
+          isBoaQualified: true,
+        },
+        relations: ["earningsHistory"],
+      });
+
+      // Distribute salary to qualified users
+      for (let user of users) {
+        const salaryEarning = this.earningHistoryRepository.create({
+          amount: this.BOA_WEEKLY_SALARY,
+          user: user,
+          type: EarningType.BOA_WEEKLY_SALARY,
+          description: "BOA Weekly Salary",
+        });
+
+        await this.earningHistoryRepository.save(salaryEarning);
+
+        user.claimable += this.BOA_WEEKLY_SALARY;
+        user.earningsHistory && user.earningsHistory.push(salaryEarning);
+        await this.userRepository.save(user);
+      }
+    } catch (error: any) {
+      console.error("Error in distributeBOAWeeklySalary:", error);
+    }
+  }
+
+  async calculateBOAGlobalBonus(amount: number): Promise<number> {
+    // Get all users' total investments
+    const allUsers = await this.userRepository.find({
+      where: {
+        isBoaQualified: true,
+      },
+      relations: ["earningsHistory"],
+    });
+
+    // Calculate 2% of global volume / number of users
+    const globalBonus =
+      (amount * this.BOA_GLOBAL_BONUS_PERCENTAGE) / allUsers.length;
+
+    for (let user of allUsers) {
+      // Create earning record for global bonus
+      const globalBonusEarning = this.earningHistoryRepository.create({
+        amount: globalBonus,
+        user: user,
+        type: EarningType.BOA_GLOBAL_BONUS,
+        description: "BOA Global Bonus",
+      });
+
+      user.earningsHistory && user.earningsHistory.push(globalBonusEarning);
+      user.claimable += globalBonus;
+      await this.userRepository.save(user);
+
+      await this.earningHistoryRepository.save(globalBonusEarning);
+    }
+
+    return globalBonus;
+  }
 }

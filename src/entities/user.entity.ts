@@ -88,9 +88,13 @@ export class User {
   @Column({ default: "user" })
   role!: string;
 
-  @Column({ type: "enum", enum: ["blocked", "deleted", "active"], default: "active" })
+  @Column({
+    type: "enum",
+    enum: ["blocked", "deleted", "active"],
+    default: "active",
+  })
   status!: string;
-  
+
   @OneToMany(() => Earning, (earning) => earning.user)
   earningsHistory!: Earning[];
 
@@ -111,4 +115,7 @@ export class User {
 
   @Column({ default: false })
   isVerified!: boolean;
+
+  @Column({ default: false })
+  isBoaQualified!: boolean;
 }

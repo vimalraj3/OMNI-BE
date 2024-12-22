@@ -22,6 +22,8 @@ export enum EarningType {
   ROI = "roi",
   REF_COMMISSION = "ref-commission",
   REFERRAL_BONUS = "referral-bonus",
+  BOA_WEEKLY_SALARY = "BOA_WEEKLY_SALARY",
+  BOA_GLOBAL_BONUS = "BOA_GLOBAL_BONUS",
 }
 
 @Entity("earnings")
